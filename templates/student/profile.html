@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-4 gap-2">
+  <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="fw-bold mb-0">
+    <i class="bi bi-person-circle me-2 text-primary"></i>My Profile
+  </h4>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }} py-2">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="row g-4">
+
+  <!-- Profile Info (Read-only) -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center p-4">
+        <div class="mx-auto rounded-circle bg-primary text-white d-flex
+                    align-items-center justify-content-center fw-bold fs-1 mb-3"
+             style="width:90px;height:90px;">
+          {{ student.name[0].upper() }}
+        </div>
+        <h5 class="fw-bold mb-1">{{ student.name }}</h5>
+        <span class="badge bg-primary fs-6 mb-2">{{ student.roll_no }}</span>
+        <div class="text-muted small mb-1">{{ student.branch }}</div>
+        <div class="text-muted small mb-1">{{ student.class }}</div>
+        <div class="text-muted small">{{ student.year }} &bull; Semester {{ student.semester }}</div>
+      </div>
+      <div class="card-footer bg-light p-3">
+        <div class="row g-2 text-center">
+          <div class="col-6">
+            <div class="fw-bold text-primary">{{ student.year }}</div>
+            <div class="text-muted" style="font-size:.75rem">Year</div>
+          </div>
+          <div class="col-6">
+            <div class="fw-bold text-success">Sem {{ student.semester }}</div>
+            <div class="text-muted" style="font-size:.75rem">Semester</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Profile</h6>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">
+          <div class="row g-3">
+
+            <!-- Roll No (read-only) -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Roll Number</label>
+              <input type="text" class="form-control bg-light"
+                     value="{{ student.roll_no }}" readonly />
+              <div class="form-text">Roll number cannot be changed.</div>
+            </div>
+
+            <!-- Full Name -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control"
+                     value="{{ student.name }}" required />
+            </div>
+
+            <!-- Branch (read-only) -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Branch</label>
+              <input type="text" class="form-control bg-light"
+                     value="{{ student.branch }}" readonly />
+              <div class="form-text">Contact admin to change branch.</div>
+            </div>
+
+            <!-- Class -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Class <span class="text-danger">*</span></label>
+              <input type="text" name="class" class="form-control"
+                     value="{{ student.class }}" required
+                     placeholder="e.g. B.Tech IT - A" />
+            </div>
+
+            <!-- Year -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Year <span class="text-danger">*</span></label>
+              <select name="year" class="form-select" required>
+                {% for y in years %}
+                <option value="{{ y }}" {% if student.year == y %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Semester -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Semester <span class="text-danger">*</span></label>
+              <select name="semester" class="form-select" required>
+                {% for s in semesters %}
+                <option value="{{ s }}"
+                  {% if student.semester|string == s|string %}selected{% endif %}>
+                  Semester {{ s }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Email -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">College Email <span class="text-danger">*</span></label>
+              <input type="email" name="email" class="form-control"
+                     value="{{ student.email }}" required
+                     pattern=".*@kitsw\.ac\.in$"
+                     title="Must end with @kitsw.ac.in" />
+            </div>
+
+            <!-- Phone -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Phone</label>
+              <input type="tel" name="phone" class="form-control"
+                     value="{{ student.phone or '' }}"
+                     placeholder="10-digit number" />
+            </div>
+
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary flex-grow-1 fw-semibold">
+              <i class="bi bi-check-circle me-2"></i>Save Changes
+            </button>
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary">
+              Cancel
+            </a>
+          </div>
+        </form>
+
+        <hr class="my-4">
+
+        <!-- Change Password -->
+        <h6 class="fw-semibold mb-3">
+          <i class="bi bi-shield-lock me-2 text-warning"></i>Change Password
+        </h6>
+        <form method="POST" action="{{ url_for('student.change_password') }}">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Current Password</label>
+              <input type="password" name="current_password" class="form-control"
+                     placeholder="Current password" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">New Password</label>
+              <input type="password" name="new_password" class="form-control"
+                     placeholder="New password" required minlength="6" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Confirm Password</label>
+              <input type="password" name="confirm_password" class="form-control"
+                     placeholder="Confirm new password" required minlength="6" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-warning mt-3 fw-semibold">
+            <i class="bi bi-shield-check me-1"></i>Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

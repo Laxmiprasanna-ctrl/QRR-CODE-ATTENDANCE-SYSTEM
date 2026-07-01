@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Generate QR Code{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-4 gap-2">
+  <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div>
+    <h4 class="fw-bold mb-0">
+      <i class="bi bi-qr-code me-2 text-success"></i>Generate Attendance QR
+    </h4>
+    <small class="text-muted">QR is valid only during your scheduled class window</small>
+  </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+  <i class="bi bi-exclamation-triangle me-2"></i><strong>Error:</strong> {{ error }}
+</div>
+{% endif %}
+
+<div class="row g-4">
+
+  <!-- Form / Blocked Panel -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+
+      {% if outside_schedule %}
+      <!-- ── BLOCKED: no active class right now ── -->
+      <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0"><i class="bi bi-clock me-2"></i>Outside Class Hours</h6>
+      </div>
+      <div class="card-body p-4 text-center">
+        <i class="bi bi-lock-fill display-4 text-warning mb-3 d-block"></i>
+        <h5 class="fw-bold">QR Generation Blocked</h5>
+        <p class="text-muted mb-3">
+          QR generation is only allowed during your scheduled class time.
+        </p>
+        <div class="alert alert-light border small text-start">
+          <i class="bi bi-info-circle me-1 text-primary"></i>
+          Check your timetable on the right. Come back when your class starts.
+        </div>
+        <button class="btn btn-secondary w-100 py-2 fw-semibold" disabled>
+          <i class="bi bi-qr-code me-2"></i>Generate QR Code
+        </button>
+      </div>
+
+      {% else %}
+      <!-- ── ALLOWED: active class found ── -->
+      <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><i class="bi bi-broadcast me-2"></i>Class in Progress — Ready to Generate</h6>
+      </div>
+      <div class="card-body p-4">
+
+        <!-- Active class info banner -->
+        <div class="alert alert-success border-success mb-4">
+          <div class="fw-semibold mb-1">
+            <i class="bi bi-check-circle me-1"></i>Active Class Detected
+          </div>
+          <div class="small">
+            <strong>Subject:</strong> {{ active_class.subject }}<br>
+            <strong>Period:</strong> {{ active_class.period }}<br>
+            <strong>Window:</strong> {{ active_class.start_time }} – {{ active_class.end_time }}
+          </div>
+        </div>
+
+        <form method="POST" id="qrForm">
+          <!-- Subject is locked to the active timetable entry -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Subject</label>
+            <input type="text" name="subject"
+                   class="form-control form-control-lg bg-light"
+                   value="{{ active_class.subject }}" readonly />
+            <div class="form-text text-muted">
+              <i class="bi bi-lock me-1"></i>Locked to your current scheduled class.
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Period</label>
+            <input type="text" name="period"
+                   class="form-control bg-light"
+                   value="{{ active_class.period }}" readonly />
+          </div>
+
+          <div class="alert alert-warning border-0 small mb-4">
+            <i class="bi bi-clock me-1"></i>
+            QR expires at <strong>{{ active_class.end_time }}</strong> (class end time).
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 py-2 fw-semibold btn-lg"
+                  id="generateBtn">
+            <i class="bi bi-qr-code me-2"></i>Generate QR Code
+          </button>
+        </form>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- Today's Timetable -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h6 class="mb-0">
+          <i class="bi bi-calendar3 me-2"></i>Today's Timetable
+        </h6>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for cls in today_classes %}
+        <div class="list-group-item px-3 py-2
+          {% if active_class and cls.subject == active_class.subject and cls.period == active_class.period %}
+            list-group-item-success
+          {% endif %}">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="badge bg-primary me-1">{{ cls.period }}</span>
+              <span class="fw-semibold">{{ cls.subject }}</span>
+              {% if active_class and cls.subject == active_class.subject and cls.period == active_class.period %}
+              <span class="badge bg-success ms-1 small">NOW</span>
+              {% endif %}
+            </div>
+            <small class="text-muted">{{ cls.start_time }}–{{ cls.end_time }}</small>
+          </div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-center text-muted py-4">
+          <i class="bi bi-calendar-x me-1"></i>No classes scheduled today.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="col-lg-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>How It Works</h6>
+      </div>
+      <div class="card-body">
+        {% for n, t, d in [
+          ('1','Class Time Only','QR can only be generated during your scheduled slot.'),
+          ('2','Auto Subject','Subject and period are locked from your timetable.'),
+          ('3','Show Students','Display QR on screen or projector.'),
+          ('4','Students Scan','Students open /scan and scan this QR.'),
+          ('5','Auto Expires','QR becomes invalid at class end time.')
+        ] %}
+        <div class="d-flex gap-2 {% if not loop.last %}mb-3{% endif %}">
+          <div class="rounded-circle bg-success text-white d-flex align-items-center
+                      justify-content-center flex-shrink-0 fw-bold small"
+               style="width:28px;height:28px;">{{ n }}</div>
+          <div>
+            <div class="fw-semibold small">{{ t }}</div>
+            <div class="text-muted" style="font-size:.75rem">{{ d }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if not outside_schedule %}
+<script>
+document.getElementById("qrForm").addEventListener("submit", function() {
+  const btn = document.getElementById("generateBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">
+      <span class="live-dot me-1"></span>
+      Live — {{ today }}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('attendance') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-calendar-check me-1"></i>All Attendance
+    </a>
+    <a href="{{ url_for('export_attendance') }}" class="btn btn-sm btn-primary">
+      <i class="bi bi-download me-1"></i>Export CSV
+    </a>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('students') }}" class="text-decoration-none">
+      <div class="card stat-card" style="--bs-card-border-color:transparent;">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <div class="stat-icon" style="background:#eff6ff;color:#2563eb;">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div>
+            <div class="stat-value" style="color:#2563eb;">{{ total_students }}</div>
+            <div class="stat-label">Students</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('admin_teachers') }}" class="text-decoration-none">
+      <div class="card stat-card">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;">
+            <i class="bi bi-person-video3"></i>
+          </div>
+          <div>
+            <div class="stat-value" style="color:#16a34a;">{{ total_teachers }}</div>
+            <div class="stat-label">Teachers</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('admin_sessions') }}" class="text-decoration-none">
+      <div class="card stat-card">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <div class="stat-icon" style="background:#f0f9ff;color:#0284c7;">
+            <i class="bi bi-qr-code"></i>
+          </div>
+          <div>
+            <div class="stat-value" style="color:#0284c7;">{{ total_sessions }}</div>
+            <div class="stat-label">QR Sessions</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('attendance') }}" class="text-decoration-none">
+      <div class="card stat-card">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <div class="stat-icon" style="background:#fefce8;color:#ca8a04;">
+            <i class="bi bi-journal-check"></i>
+          </div>
+          <div>
+            <div class="stat-value" style="color:#ca8a04;">{{ total_attendance }}</div>
+            <div class="stat-label">Total Records</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('attendance', date=today) }}" class="text-decoration-none">
+      <div class="card stat-card">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;">
+            <i class="bi bi-person-check-fill"></i>
+          </div>
+          <div>
+            <div class="stat-value" style="color:#16a34a;">{{ present_today }}</div>
+            <div class="stat-label">Present Today</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('students') }}" class="text-decoration-none">
+      <div class="card stat-card">
+        <div class="card-body d-flex align-items-center gap-3 p-3">
+          <div class="stat-icon" style="background:#fef2f2;color:#dc2626;">
+            <i class="bi bi-person-x-fill"></i>
+          </div>
+          <div>
+            <div class="stat-value" style="color:#dc2626;">{{ absent_count }}</div>
+            <div class="stat-label">Absent Today</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+<!-- Chart + Subject Breakdown -->
+<div class="row g-4 mb-4">
+
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center"
+           style="background:#fff;">
+        <span>
+          <i class="bi bi-bar-chart-fill me-2 text-primary"></i>
+          Attendance — Last 30 Days
+        </span>
+        <span class="badge" style="background:#eff6ff;color:#2563eb;">
+          {{ total_attendance }} total
+        </span>
+      </div>
+      <div class="card-body p-3">
+        <canvas id="attendanceChart" height="115"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header" style="background:#fff;">
+        <i class="bi bi-book-fill me-2 text-info"></i>By Subject (All Time)
+      </div>
+      <div class="card-body p-3" style="overflow-y:auto;max-height:280px;">
+        {% if subject_all %}
+          {% set max_count = subject_all.values() | max %}
+          {% for subject, count in subject_all.items() | sort(attribute='1', reverse=True) %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="small fw-semibold text-truncate" style="max-width:150px;">
+                {{ subject }}
+              </span>
+              <span class="badge rounded-pill"
+                    style="background:#eff6ff;color:#2563eb;font-size:.68rem;">
+                {{ count }}
+              </span>
+            </div>
+            <div class="progress" style="height:5px;">
+              <div class="progress-bar"
+                   style="width:{{ (count/max_count*100)|round }}%;background:#2563eb;"></div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center text-muted py-4 small">No records yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Today's Subject Breakdown -->
+{% if subject_attendance %}
+<div class="card mb-4">
+  <div class="card-header" style="background:#fff;">
+    <i class="bi bi-calendar-day-fill me-2 text-success"></i>
+    Today's Attendance by Subject
+    <span class="badge bg-success ms-2">{{ today }}</span>
+  </div>
+  <div class="card-body p-3">
+    <div class="row g-2">
+      {% for subject, count in subject_attendance.items() %}
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="{{ url_for('attendance', subject=subject, date=today) }}"
+           class="text-decoration-none">
+          <div class="text-center p-3 rounded-3 h-100"
+               style="background:#f8fafc;border:1px solid #e8ecf0;transition:all .2s;"
+               onmouseover="this.style.background='#eff6ff'"
+               onmouseout="this.style.background='#f8fafc'">
+            <div class="fw-bold" style="font-size:1.6rem;color:#2563eb;">{{ count }}</div>
+            <div class="text-muted text-truncate" style="font-size:.72rem;">{{ subject }}</div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Recent Attendance -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center"
+       style="background:#fff;">
+    <span>
+      <i class="bi bi-clock-history me-2 text-secondary"></i>Recent Attendance
+    </span>
+    <a href="{{ url_for('attendance') }}"
+       class="btn btn-sm"
+       style="background:#eff6ff;color:#2563eb;font-size:.75rem;">
+      View All {{ total_attendance }} →
+    </a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>#</th><th>Roll No</th><th>Name</th>
+            <th>Subject</th><th>Date</th><th>Time</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recent %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td>
+              <span class="badge" style="background:#eff6ff;color:#2563eb;">
+                {{ r.roll_no or '—' }}
+              </span>
+            </td>
+            <td class="fw-semibold">{{ r.name }}</td>
+            <td>
+              <span class="badge" style="background:#f0f9ff;color:#0284c7;">
+                {{ r.subject }}
+              </span>
+            </td>
+            <td class="text-muted">{{ r.date }}</td>
+            <td class="text-muted">{{ r.time }}</td>
+            <td class="text-center">
+              <span class="badge" style="background:#f0fdf4;color:#16a34a;">
+                <i class="bi bi-check-circle-fill me-1"></i>{{ r.status }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-5">
+              <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+              No attendance records yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+fetch("/api/chart_data").then(r=>r.json()).then(data=>{
+  const maxVal = Math.max(...data.values, 1);
+  new Chart(document.getElementById("attendanceChart"),{
+    type:"bar",
+    data:{
+      labels: data.labels,
+      datasets:[{
+        label:"Present",
+        data: data.values,
+        backgroundColor: data.values.map(v =>
+          v > 0 ? "rgba(37,99,235,.75)" : "rgba(226,232,240,.6)"
+        ),
+        borderRadius: 5,
+        borderSkipped: false
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:"#1e293b",
+          titleColor:"#94a3b8",
+          bodyColor:"#f1f5f9",
+          padding:10,
+          cornerRadius:8,
+          callbacks:{
+            title: ctx => "Date: " + ctx[0].label,
+            label: ctx => "  Present: " + ctx.raw
+          }
+        }
+      },
+      scales:{
+        y:{
+          beginAtZero:true,
+          max: maxVal + 1,
+          grid:{ color:"#f1f5f9" },
+          ticks:{ stepSize:1, precision:0, color:"#94a3b8", font:{size:11} }
+        },
+        x:{
+          grid:{ display:false },
+          ticks:{ maxTicksLimit:10, maxRotation:45, color:"#94a3b8", font:{size:10} }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}KITSW Smart Attendance{% endblock %}
+{% block content %}
+
+<section class="hero-section">
+  <div class="container text-center hero-content px-4">
+
+    <div class="mb-4">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-3"
+           style="width:72px;height:72px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);">
+        <i class="bi bi-qr-code-scan" style="font-size:2rem;color:#fff;"></i>
+      </div>
+      <div class="badge mb-3"
+           style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:.72rem;padding:.4em .9em;">
+        <span class="live-dot me-1" style="background:#4ade80;box-shadow:0 0 6px #4ade80;"></span>
+        KITSW — Smart Attendance System
+      </div>
+    </div>
+
+    <h1 style="font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.04em;color:#fff;line-height:1.1;" class="mb-3">
+      QR Code Based<br>
+      <span style="color:rgba(255,255,255,.75);">Attendance System</span>
+    </h1>
+    <p style="color:rgba(255,255,255,.7);font-size:1rem;max-width:480px;margin:0 auto 2.5rem;">
+      Teacher generates QR &bull; Student scans &bull; Admin monitors — all in real time
+    </p>
+
+    <div class="d-flex gap-3 justify-content-center flex-wrap mb-5">
+      <a href="{{ url_for('admin_login') }}" class="btn btn-lg px-4"
+         style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border:none;box-shadow:0 4px 20px rgba(220,38,38,.4);font-weight:700;">
+        <i class="bi bi-shield-fill-check me-2"></i>Admin Login
+      </a>
+      <a href="{{ url_for('teacher.login') }}" class="btn btn-lg px-4"
+         style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;box-shadow:0 4px 20px rgba(22,163,74,.4);font-weight:700;">
+        <i class="bi bi-mortarboard-fill me-2"></i>Teacher Login
+      </a>
+      <a href="{{ url_for('student.login') }}" class="btn btn-lg px-4"
+         style="background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;box-shadow:0 4px 20px rgba(37,99,235,.4);font-weight:700;">
+        <i class="bi bi-person-badge-fill me-2"></i>Student Login
+      </a>
+    </div>
+
+    <div class="row g-3 justify-content-center" style="max-width:800px;margin:0 auto;">
+      {% for icon, color, title, desc in [
+        ('shield-fill-check','#ded41d','Admin Portal','Manage students, teachers, timetable & reports'),
+        ('mortarboard-fill',  '#16a34a','Teacher Portal','Generate QR codes & mark attendance instantly'),
+        ('person-badge-fill', '#063451','Student Portal','Scan QR, view attendance & download your QR')
+      ] %}
+      <div class="col-md-4">
+        <div class="p-4 rounded-3 text-start h-100"
+             style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(10px);">
+          <div class="mb-3 d-flex align-items-center justify-content-center rounded-2"
+               style="width:40px;height:40px;background:rgba(255,255,255,.15);">
+            <i class="bi bi-{{ icon }}" style="color:#fff;font-size:1.1rem;"></i>
+          </div>
+          <div class="fw-bold mb-1" style="color:#fff;font-size:.9rem;">{{ title }}</div>
+          <div style="color:rgba(255,255,255,.65);font-size:.78rem;">{{ desc }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+
+<footer style="background:linear-gradient(135deg,#0f0c29,#1a1560);border-top:2px solid rgba(99,102,241,.4);padding:1.2rem;text-align:center;">
+  <small style="font-size:.8rem;font-weight:600;letter-spacing:.05em;">
+    <span style="background:linear-gradient(135deg,#818cf8,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+      <i class="bi bi-qr-code-scan me-2"></i>
+      &copy; 2026 KITSW Smart Attendance System
+      <i class="bi bi-qr-code-scan ms-2"></i>
+    </span>
+  </small>
+</footer>
+{% endblock %}

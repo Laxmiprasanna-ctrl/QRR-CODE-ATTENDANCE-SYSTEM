@@ -1,0 +1,8 @@
+flask
+pyodbc
+opencv-python
+qrcode[pil]
+Pillow
+numpy
+werkzeug
+pyzbar

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}QR Sessions{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">QR Sessions
+      <span class="badge bg-info ms-2 fs-6">{{ sessions|length }}</span>
+    </h4>
+    <small class="text-muted">All teacher QR sessions</small>
+  </div>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Dashboard
+  </a>
+</div>
+
+<div class="card border-0">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th>
+            <th>Teacher</th>
+            <th>Subject</th>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th class="text-center">Students</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sessions %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td class="fw-semibold">{{ s.teacher_name }}</td>
+            <td>
+              <span class="badge bg-info-subtle text-info border border-info-subtle">
+                {{ s.subject }}
+              </span>
+            </td>
+            <td class="text-muted small">{{ s.date }}</td>
+            <td class="text-muted small">{{ s.start_time }}</td>
+            <td class="text-muted small">{{ s.end_time }}</td>
+            <td class="text-center">
+              <span class="badge bg-primary rounded-pill">{{ s.count }}</span>
+            </td>
+            <td class="text-center">
+              {% if s.is_active %}
+              <span class="badge bg-success">
+                <i class="bi bi-broadcast me-1"></i>Active
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">Expired</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-5">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>No QR sessions yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if sessions %}
+  <div class="card-footer bg-white text-muted small">
+    {{ sessions|length }} session(s) total
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

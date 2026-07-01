@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}My Attendance{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-4 gap-2">
+  <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div>
+    <h4 class="fw-bold mb-0">
+      <i class="bi bi-calendar-check me-2 text-primary"></i>My Attendance
+    </h4>
+    <small class="text-muted">
+      <span class="badge bg-primary">{{ student.roll_no }}</span>
+      {{ student.name }} &bull; {{ student.branch }} &bull; Sem {{ student.semester }}
+    </small>
+  </div>
+  <a href="{{ url_for('scan') }}" class="btn btn-success btn-sm ms-auto" target="_blank">
+    <i class="bi bi-qr-code-scan me-1"></i>Scan Teacher QR
+  </a>
+</div>
+
+<!-- Overall Summary -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-2 fw-bold text-primary">{{ total_classes }}</div>
+      <div class="text-muted small">Total Classes</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-2 fw-bold text-success">{{ total_present }}</div>
+      <div class="text-muted small">Present</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-2 fw-bold text-danger">{{ total_absent }}</div>
+      <div class="text-muted small">Absent</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-2 fw-bold
+        {% if overall_pct >= 75 %}text-success
+        {% elif overall_pct >= 50 %}text-warning
+        {% else %}text-danger{% endif %}">
+        {{ overall_pct }}%
+      </div>
+      <div class="text-muted small">Overall %</div>
+    </div>
+  </div>
+</div>
+
+<!-- Overall Progress Bar -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <div class="d-flex justify-content-between mb-1">
+      <span class="fw-semibold small">Overall Attendance</span>
+      <span class="fw-bold small
+        {% if overall_pct >= 75 %}text-success
+        {% elif overall_pct >= 50 %}text-warning
+        {% else %}text-danger{% endif %}">
+        {{ overall_pct }}%
+      </span>
+    </div>
+    <div class="progress" style="height:12px;">
+      <div class="progress-bar
+        {% if overall_pct >= 75 %}bg-success
+        {% elif overall_pct >= 50 %}bg-warning
+        {% else %}bg-danger{% endif %}"
+           style="width:{{ overall_pct }}%"></div>
+    </div>
+    {% if overall_pct < 75 %}
+    <div class="text-danger small mt-1">
+      <i class="bi bi-exclamation-triangle me-1"></i>Below 75% — Attend more classes.
+    </div>
+    {% else %}
+    <div class="text-success small mt-1">
+      <i class="bi bi-check-circle me-1"></i>Good attendance — Keep it up!
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Subject-wise Present / Absent / % -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-dark text-white">
+    <h6 class="mb-0"><i class="bi bi-book me-2"></i>Subject-wise Attendance</h6>
+  </div>
+  <div class="card-body p-0">
+    {% if subject_stats %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Subject</th>
+            <th class="text-center">Total</th>
+            <th class="text-center text-success">Present</th>
+            <th class="text-center text-danger">Absent</th>
+            <th style="min-width:180px;">Percentage</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in subject_stats %}
+          <tr>
+            <td class="fw-semibold">{{ s.subject }}</td>
+            <td class="text-center text-muted">{{ s.total }}</td>
+            <td class="text-center">
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-2">
+                {{ s.present }}
+              </span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2">
+                {{ s.absent }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:8px;">
+                  <div class="progress-bar
+                    {% if s.percent >= 75 %}bg-success
+                    {% elif s.percent >= 50 %}bg-warning
+                    {% else %}bg-danger{% endif %}"
+                       style="width:{{ s.percent }}%"></div>
+                </div>
+                <span class="small fw-bold
+                  {% if s.percent >= 75 %}text-success
+                  {% elif s.percent >= 50 %}text-warning
+                  {% else %}text-danger{% endif %}"
+                      style="min-width:38px;">{{ s.percent }}%</span>
+              </div>
+            </td>
+            <td class="text-center">
+              {% if s.percent >= 75 %}
+                <span class="badge bg-success">Good</span>
+              {% elif s.percent >= 50 %}
+                <span class="badge bg-warning text-dark">Low</span>
+              {% else %}
+                <span class="badge bg-danger">Critical</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+      No attendance yet.
+      <a href="{{ url_for('scan') }}" class="btn btn-success btn-sm ms-2" target="_blank">
+        <i class="bi bi-qr-code-scan me-1"></i>Scan Teacher QR
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Full History -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+    <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Attendance History</h6>
+    <span class="badge bg-secondary">{{ records|length }} records</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th><th>Subject</th><th>Date</th><th>Time</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td class="fw-semibold">{{ r.subject }}</td>
+            <td>{{ r.date }}</td>
+            <td class="text-muted small">{{ r.time }}</td>
+            <td class="text-center">
+              <span class="badge bg-success">
+                <i class="bi bi-check-circle me-1"></i>Present
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-5">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>No records yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

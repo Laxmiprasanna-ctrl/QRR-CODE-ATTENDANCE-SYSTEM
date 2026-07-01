@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+{% block content %}
+
+<!-- Student Info -->
+<div class="card border-0 mb-4">
+  <div class="card-body py-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="rounded-circle bg-primary text-white d-flex align-items-center
+                  justify-content-center fw-bold fs-4 flex-shrink-0"
+           style="width:52px;height:52px;">
+        {{ student.name[0].upper() }}
+      </div>
+      <div class="flex-grow-1">
+        <h5 class="fw-bold mb-0">{{ student.name }}</h5>
+        <div class="text-muted small">
+          <span class="badge bg-primary me-1">{{ student.roll_no }}</span>
+          {{ student.branch }} &bull; {{ student.year }} &bull; Sem {{ student.semester }}
+        </div>
+      </div>
+      <a href="{{ url_for('scan') }}" class="btn btn-success btn-sm">
+        <i class="bi bi-qr-code-scan me-1"></i>Scan Teacher QR
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Attendance -->
+  <div class="col-lg-12">
+
+    <!-- Summary -->
+    <div class="row g-3 mb-4">
+      <div class="col-4">
+        <div class="card border-0 text-center py-3">
+          <div class="fs-3 fw-bold text-success">{{ total_present }}</div>
+          <div class="text-muted small">Present</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card border-0 text-center py-3">
+          <div class="fs-3 fw-bold text-danger">{{ total_absent }}</div>
+          <div class="text-muted small">Absent</div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card border-0 text-center py-3">
+          <div class="fs-3 fw-bold
+            {% if overall_pct >= 75 %}text-success
+            {% elif overall_pct >= 50 %}text-warning
+            {% else %}text-danger{% endif %}">
+            {{ overall_pct }}%
+          </div>
+          <div class="text-muted small">Overall</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject Table -->
+    <div class="card border-0">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <h6 class="fw-semibold mb-0">Subject-wise Attendance</h6>
+        <a href="{{ url_for('student.attendance') }}" class="btn btn-sm btn-outline-primary">
+          Full History
+        </a>
+      </div>
+      <div class="card-body p-0">
+        {% if subject_stats %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Subject</th>
+                <th class="text-center text-success">Present</th>
+                <th class="text-center text-danger">Absent</th>
+                <th style="min-width:150px;">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in subject_stats %}
+              <tr>
+                <td class="fw-semibold">{{ s.subject }}</td>
+                <td class="text-center">
+                  <span class="badge bg-success rounded-pill">{{ s.present }}</span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-danger rounded-pill">{{ s.absent }}</span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height:7px;">
+                      <div class="progress-bar
+                        {% if s.percent >= 75 %}bg-success
+                        {% elif s.percent >= 50 %}bg-warning
+                        {% else %}bg-danger{% endif %}"
+                           style="width:{{ s.percent }}%"></div>
+                    </div>
+                    <span class="small fw-bold
+                      {% if s.percent >= 75 %}text-success
+                      {% elif s.percent >= 50 %}text-warning
+                      {% else %}text-danger{% endif %}"
+                          style="min-width:36px;">{{ s.percent }}%</span>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+          No attendance yet.
+          <a href="{{ url_for('scan') }}" class="btn btn-success btn-sm ms-2">
+            <i class="bi bi-qr-code-scan me-1"></i>Scan Teacher QR
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

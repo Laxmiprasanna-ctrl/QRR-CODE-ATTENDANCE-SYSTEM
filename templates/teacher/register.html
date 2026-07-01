@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Teacher Registration{% endblock %}
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5"
+     style="background:linear-gradient(135deg,#198754 0%,#0f5132 100%);">
+  <div class="card shadow-lg border-0" style="width:480px;border-radius:16px;">
+    <div class="card-body p-5">
+      <div class="text-center mb-4">
+        <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle bg-success text-white"
+             style="width:72px;height:72px;">
+          <i class="bi bi-person-plus fs-2"></i>
+        </div>
+        <h3 class="fw-bold">Register Teacher</h3>
+        <p class="text-muted small">Use your college email to register</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} py-2">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control"
+                 placeholder="Dr. John Smith" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">College Email <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input type="email" name="email" class="form-control"
+                   placeholder="name@kitsw.ac.in" required
+                   pattern=".*@kitsw\.ac\.in$"
+                   title="Must be a college email ending with @kitsw.ac.in" />
+          </div>
+          <div class="form-text text-muted">
+            <i class="bi bi-info-circle me-1"></i>Must end with <strong>@kitsw.ac.in</strong>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+          <input type="password" name="password" class="form-control"
+                 placeholder="Min 6 characters" required minlength="6" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
+          <input type="text" name="subject" class="form-control"
+                 placeholder="e.g. Data Structures" required />
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+          <select name="department" class="form-select" required>
+            <option value="">Select Department</option>
+            {% for d in ['Computer Science','Information Technology','Electronics','Mechanical','Civil','Mathematics','Physics','Chemistry'] %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+          <i class="bi bi-check-circle me-2"></i>Register
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="{{ url_for('teacher.login') }}" class="text-muted small">
+          <i class="bi bi-arrow-left me-1"></i>Back to Login
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Session QR Code{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-4 gap-2">
+  <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div>
+    <h4 class="fw-bold mb-0"><i class="bi bi-qr-code me-2 text-success"></i>Session QR Code</h4>
+    <small class="text-muted">{{ sess.subject }} &bull; {{ sess.date }} &bull; Started {{ sess.start_time }}</small>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- QR Code Display -->
+  <div class="col-lg-5 text-center">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header {% if is_expired %}bg-danger{% else %}bg-success{% endif %} text-white">
+        <h6 class="mb-0">
+          {% if is_expired %}
+            <i class="bi bi-x-circle me-2"></i>Session Expired
+          {% else %}
+            <i class="bi bi-broadcast me-2"></i>Active — Show to Students
+          {% endif %}
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        {% if is_expired %}
+          <div class="py-5 text-muted">
+            <i class="bi bi-clock-history display-3 mb-3 d-block text-danger"></i>
+            <h5>QR Code Expired</h5>
+            <p class="small">This session has ended. Generate a new QR for the next class.</p>
+            <a href="{{ url_for('teacher.generate_qr') }}" class="btn btn-success">
+              <i class="bi bi-plus-circle me-1"></i>New QR
+            </a>
+          </div>
+        {% else %}
+          <img src="{{ url_for('static', filename=qr_url) }}" alt="Session QR"
+               class="img-fluid rounded border shadow-sm mb-3"
+               style="max-width:280px;" />
+
+          <!-- Countdown Timer -->
+          <div class="mb-3">
+            <div class="text-muted small mb-1">Time Remaining (2 min session)</div>
+            <div id="countdown" class="fs-2 fw-bold text-success font-monospace">20:00</div>
+            <div class="progress mt-2" style="height:8px;">
+              <div id="progressBar" class="progress-bar bg-success" style="width:100%"></div>
+            </div>
+          </div>
+
+          <div class="alert alert-light border small text-start">
+            <strong>Expires at:</strong> {{ expiry }}<br>
+            <strong>Subject:</strong> {{ sess.subject }}<br>
+            <strong>Token:</strong> <code class="d-block text-truncate small">{{ sess.token[:20] }}...</code>
+          </div>
+        {% endif %}
+      </div>
+      {% if not is_expired %}
+      <div class="card-footer bg-light d-flex gap-2">
+        <a href="{{ url_for('teacher.export_session', session_id=sess.session_id) }}"
+           class="btn btn-outline-success btn-sm flex-grow-1">
+          <i class="bi bi-download me-1"></i>Export CSV
+        </a>
+        <a href="{{ url_for('teacher.generate_qr') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-plus-circle me-1"></i>New QR
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Live Attendance Panel -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="bi bi-people me-2"></i>Students Present</h6>
+        <span class="badge bg-success fs-6 px-3" id="liveCount">{{ count }}</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush" id="studentList"
+             style="max-height:420px;overflow-y:auto;">
+          {% for s in students %}
+          <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+            <div>
+              <div class="fw-semibold">{{ s.student_name }}</div>
+              <div class="text-muted small">
+                {{ s.roll_no or 'N/A' }} &bull; {{ s.department or 'N/A' }}
+              </div>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-success-subtle text-success border border-success-subtle">
+                <i class="bi bi-check-circle me-1"></i>Present
+              </span>
+              <div class="text-muted" style="font-size:.72rem;">{{ s.time }}</div>
+            </div>
+          </div>
+          {% else %}
+          <div class="list-group-item text-center text-muted py-5" id="emptyMsg">
+            <i class="bi bi-hourglass-split fs-1 d-block mb-2"></i>
+            Waiting for students to scan...
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card-footer text-muted small d-flex justify-content-between">
+        <span><i class="bi bi-arrow-repeat me-1"></i>Auto-refreshes every 3 seconds</span>
+        <span>Expires at <strong>{{ expiry }}</strong></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if not is_expired %}
+<script>
+const SESSION_ID  = {{ sess.session_id }};
+const TOTAL_SECS  = {{ expiry_secs }};
+let   remaining   = {{ remaining_secs }};
+
+function updateCountdown(secs) {
+  const m   = String(Math.floor(secs / 60)).padStart(2, "0");
+  const s   = String(secs % 60).padStart(2, "0");
+  const el  = document.getElementById("countdown");
+  const bar = document.getElementById("progressBar");
+  el.textContent  = `${m}:${s}`;
+  const pct = Math.max(0, (secs / TOTAL_SECS) * 100);
+  bar.style.width = pct + "%";
+  if (pct > 50)       bar.className = "progress-bar bg-success";
+  else if (pct > 20)  bar.className = "progress-bar bg-warning";
+  else                bar.className = "progress-bar bg-danger";
+  if (secs <= 0) {
+    el.textContent = "EXPIRED";
+    el.className   = "fs-2 fw-bold text-danger font-monospace";
+    setTimeout(() => location.reload(), 1500);
+  }
+}
+
+function pollAttendance() {
+  fetch(`/teacher/api/session_status/${SESSION_ID}`)
+    .then(r => r.json())
+    .then(data => {
+      remaining = data.remaining;
+      updateCountdown(remaining);
+      document.getElementById("liveCount").textContent = data.count;
+
+      if (data.students && data.students.length > 0) {
+        const list  = document.getElementById("studentList");
+        const empty = document.getElementById("emptyMsg");
+        if (empty) empty.remove();
+        list.innerHTML = data.students.map(s => `
+          <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+            <div>
+              <div class="fw-semibold">${s.student_name}</div>
+              <div class="text-muted small">${s.roll_no || 'N/A'} &bull; ${s.department || 'N/A'}</div>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-success-subtle text-success border border-success-subtle">
+                <i class="bi bi-check-circle me-1"></i>Present
+              </span>
+              <div class="text-muted" style="font-size:.72rem;">${s.time}</div>
+            </div>
+          </div>`).join("");
+      }
+      if (data.is_expired) location.reload();
+    })
+    .catch(e => console.warn("Poll error:", e));
+}
+
+setInterval(pollAttendance, 3000);
+updateCountdown(remaining);
+pollAttendance();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Report – {{ student.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">
+      <i class="bi bi-bar-chart me-2 text-primary"></i>Student Report
+    </h4>
+    <small class="text-muted">{{ student.name }} &bull; {{ student.roll_no }} &bull; {{ student.branch }}</small>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('export_student_attendance', sid=student.student_id) }}"
+       class="btn btn-sm btn-success">
+      <i class="bi bi-download me-1"></i>Export CSV
+    </a>
+    <a href="{{ url_for('students') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="card border-0 bg-success bg-opacity-10 text-center py-3">
+      <div class="fs-2 fw-bold text-success">{{ overall_present }}</div>
+      <div class="small text-muted">Classes Attended</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card border-0 bg-danger bg-opacity-10 text-center py-3">
+      <div class="fs-2 fw-bold text-danger">{{ overall_absent }}</div>
+      <div class="small text-muted">Classes Absent</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card border-0 bg-primary bg-opacity-10 text-center py-3">
+      <div class="fs-2 fw-bold text-primary">{{ overall_pct }}%</div>
+      <div class="small text-muted">Overall Attendance</div>
+    </div>
+  </div>
+</div>
+
+<!-- Subject-wise Summary -->
+{% if summary %}
+<div class="card border-0 mb-4">
+  <div class="card-header bg-white fw-semibold">Subject-wise Summary</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th><th>Subject</th><th>Teacher</th>
+            <th class="text-center">Present</th><th class="text-center">Attendance %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in summary %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td class="fw-semibold">{{ s.subject }}</td>
+            <td class="text-muted small">{{ s.teacher }}</td>
+            <td class="text-center"><span class="badge bg-success">{{ s.present }}</span></td>
+            <td class="text-center">
+              <div class="progress" style="height:8px;min-width:80px;">
+                <div class="progress-bar bg-success" style="width:{{ s.percent }}%"></div>
+              </div>
+              <small class="text-muted">{{ s.percent }}%</small>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Detailed Records -->
+<div class="card border-0">
+  <div class="card-header bg-white fw-semibold d-flex justify-content-between">
+    <span>Attendance Log</span>
+    <span class="badge bg-primary">{{ records|length }} records</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th><th>Subject</th><th>Date</th><th>Time</th>
+            <th>Period</th><th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td class="fw-semibold">{{ r.subject }}</td>
+            <td class="text-muted small">{{ r.date }}</td>
+            <td class="text-muted small">{{ r.time }}</td>
+            <td class="text-muted small">{{ r.period or '—' }}</td>
+            <td class="text-center">
+              <span class="badge bg-{{ 'success' if r.status == 'Present' else 'danger' }}">
+                {{ r.status }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-5">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>No attendance records found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

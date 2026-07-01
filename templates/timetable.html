@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Timetable{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">Timetable</h4>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+    <i class="bi bi-plus-circle me-1"></i>Add Entry
+  </button>
+</div>
+
+{% for day in days %}
+{% set day_entries = entries | selectattr("day", "equalto", day) | list %}
+<div class="card border-0 mb-3">
+  <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+    <span class="fw-semibold">{{ day }}</span>
+    <span class="badge bg-secondary">{{ day_entries|length }} class(es)</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Period</th><th>Subject</th><th>Teacher</th>
+            <th>Start</th><th>End</th><th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in day_entries %}
+          <tr>
+            <td><span class="badge bg-primary">{{ e.period }}</span></td>
+            <td class="fw-semibold">{{ e.subject }}</td>
+            <td>
+              {% if e.teacher_name %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle">
+                {{ e.teacher_name }}
+              </span>
+              {% else %}
+              <span class="text-muted small">Not assigned</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ e.start_time }}</td>
+            <td class="text-muted small">{{ e.end_time }}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-primary me-1"
+                data-bs-toggle="modal" data-bs-target="#editModal"
+                data-id="{{ e.id }}" data-day="{{ e.day }}"
+                data-period="{{ e.period }}" data-subject="{{ e.subject }}"
+                data-start="{{ e.start_time }}" data-end="{{ e.end_time }}"
+                data-teacher="{{ e.teacher_name or '' }}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <form method="POST" action="{{ url_for('delete_timetable', tid=e.id) }}"
+                    class="d-inline" onsubmit="return confirm('Delete this entry?')">
+                <button class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3 small">
+              No classes for {{ day }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+
+<!-- Add Modal -->
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Add Timetable Entry</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('add_timetable') }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Day *</label>
+              <select name="day" class="form-select" required>
+                <option value="">Select</option>
+                {% for d in days %}
+                <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Period *</label>
+              <input type="text" name="period" class="form-control" placeholder="e.g. P1" required />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold small">Subject *</label>
+              <input type="text" name="subject" class="form-control" placeholder="Subject name" required />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold small">Assign Teacher</label>
+              <select name="teacher_name" class="form-select">
+                <option value="">-- Not Assigned --</option>
+                {% for t in teachers %}
+                <option value="{{ t.name }}">{{ t.name }} ({{ t.subject }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Start Time *</label>
+              <input type="time" name="start_time" class="form-control" required />
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold small">End Time *</label>
+              <input type="time" name="end_time" class="form-control" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Add Entry
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Edit Timetable Entry</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="editForm">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Day</label>
+              <select name="day" id="editDay" class="form-select" required>
+                {% for d in days %}
+                <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Period</label>
+              <input type="text" name="period" id="editPeriod" class="form-control" required />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold small">Subject</label>
+              <input type="text" name="subject" id="editSubject" class="form-control" required />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold small">Assign Teacher</label>
+              <select name="teacher_name" id="editTeacher" class="form-select">
+                <option value="">-- Not Assigned --</option>
+                {% for t in teachers %}
+                <option value="{{ t.name }}">{{ t.name }} ({{ t.subject }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Start Time</label>
+              <input type="time" name="start_time" id="editStart" class="form-control" required />
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold small">End Time</label>
+              <input type="time" name="end_time" id="editEnd" class="form-control" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning">
+            <i class="bi bi-save me-1"></i>Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
+  const b = e.relatedTarget;
+  document.getElementById('editDay').value     = b.dataset.day;
+  document.getElementById('editPeriod').value  = b.dataset.period;
+  document.getElementById('editSubject').value = b.dataset.subject;
+  document.getElementById('editStart').value   = b.dataset.start;
+  document.getElementById('editEnd').value     = b.dataset.end;
+  document.getElementById('editTeacher').value = b.dataset.teacher || '';
+  document.getElementById('editForm').action   = `/timetable/edit/${b.dataset.id}`;
+});
+</script>
+{% endblock %}

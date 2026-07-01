@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Attendance Records{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <h4 class="fw-bold mb-0">Attendance Records</h4>
+  <div class="d-flex gap-2 flex-wrap">
+    <form method="GET" class="d-flex gap-2 flex-wrap">
+      <input type="date" name="date" class="form-control form-control-sm"
+             value="{{ date_filter }}" style="width:155px;" />
+      <select name="subject" class="form-select form-select-sm" style="width:170px;">
+        <option value="">All Subjects</option>
+        {% for s in subjects %}
+        <option value="{{ s }}" {% if s==subject_filter %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-sm btn-primary">
+        <i class="bi bi-funnel me-1"></i>Filter
+      </button>
+      {% if date_filter or subject_filter %}
+      <a href="{{ url_for('attendance') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+      {% endif %}
+    </form>
+    <a href="{{ url_for('export_attendance') }}" class="btn btn-sm btn-success">
+      <i class="bi bi-download me-1"></i>Export
+    </a>
+  </div>
+</div>
+
+<div class="card border-0">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th><th>Roll No</th><th>Name</th>
+            <th>Subject</th><th>Date</th><th>Time</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td><span class="badge bg-primary">{{ r.roll_no or '—' }}</span></td>
+            <td class="fw-semibold">{{ r.name }}</td>
+            <td>{{ r.subject }}</td>
+            <td class="text-muted small">{{ r.date }}</td>
+            <td class="text-muted small">{{ r.time }}</td>
+            <td class="text-center">
+              <span class="badge bg-success">{{ r.status }}</span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-5">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+              {% if date_filter or subject_filter %}No records for selected filters.
+              {% else %}No attendance records yet.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if records %}
+  <div class="card-footer bg-white text-muted small">
+    {{ records|length }} record(s)
+    {% if date_filter %} &bull; {{ date_filter }}{% endif %}
+    {% if subject_filter %} &bull; {{ subject_filter }}{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}QR Sessions{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">
+    <i class="bi bi-collection me-2 text-success"></i>All QR Sessions
+  </h4>
+  <a href="{{ url_for('teacher.generate_qr') }}" class="btn btn-success">
+    <i class="bi bi-plus-circle me-1"></i>New Session
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th>
+            <th>Subject</th>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th class="text-center">Students</th>
+            <th class="text-center">Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sessions %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td class="fw-semibold">{{ s.subject }}</td>
+            <td>{{ s.date }}</td>
+            <td>{{ s.start_time }}</td>
+            <td>{{ s.end_time }}</td>
+            <td class="text-center">
+              <span class="badge bg-primary rounded-pill">{{ s.count }}</span>
+            </td>
+            <td class="text-center">
+              {% if s.is_active %}
+                <span class="badge bg-success">
+                  <i class="bi bi-broadcast me-1"></i>Active
+                </span>
+              {% else %}
+                <span class="badge bg-secondary">Expired</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{{ url_for('teacher.session_attendance', session_id=s.session_id) }}"
+                 class="btn btn-sm btn-outline-primary me-1" title="View Attendance">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('teacher.export_session', session_id=s.session_id) }}"
+                 class="btn btn-sm btn-outline-success" title="Export CSV">
+                <i class="bi bi-download"></i>
+              </a>
+              {% if s.is_active %}
+              <a href="{{ url_for('teacher.show_qr', session_id=s.session_id) }}"
+                 class="btn btn-sm btn-outline-warning ms-1" title="Show QR">
+                <i class="bi bi-qr-code"></i>
+              </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-5">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+              No sessions yet. Generate your first QR!
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if sessions %}
+  <div class="card-footer text-muted small">{{ sessions|length }} session(s) total</div>
+  {% endif %}
+</div>
+{% endblock %}

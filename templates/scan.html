@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Scan Teacher QR{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="fw-bold mb-0">
+        <i class="bi bi-qr-code-scan me-2 text-primary"></i>Scan Teacher QR
+      </h4>
+      <small class="text-muted">
+        {% if session.student_roll %}
+          Logged in as <strong>{{ session.student_name }}</strong>
+          <span class="badge bg-primary ms-1">{{ session.student_roll }}</span>
+        {% else %}
+          Point camera at teacher's QR code to mark attendance
+        {% endif %}
+      </small>
+    </div>
+    {% if current_class %}
+    <span class="badge bg-success fs-6 px-3 py-2">
+      <i class="bi bi-broadcast me-1"></i>
+      {{ current_class.subject }} &bull; {{ current_class.period }}
+      &bull; {{ current_class.start_time }}–{{ current_class.end_time }}
+    </span>
+    {% else %}
+    <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+      <i class="bi bi-clock me-1"></i>No Active Class
+    </span>
+    {% endif %}
+  </div>
+
+  <div class="row g-3">
+
+    <!-- Camera -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-camera-video me-2"></i>Camera</span>
+          <span class="badge bg-secondary" id="camStatus">Ready</span>
+        </div>
+        <div class="card-body p-0 position-relative bg-black">
+          <canvas id="scanCanvas" class="w-100 d-block" style="min-height:300px;max-height:400px;"></canvas>
+          <div class="scan-overlay">
+            <div class="scan-frame"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+        <div class="card-footer bg-dark text-center py-2">
+          <button id="startBtn" class="btn btn-success px-4" onclick="startCamera()">
+            <i class="bi bi-play-circle me-1"></i>Start Camera
+          </button>
+          <button id="stopBtn" class="btn btn-danger px-4 d-none" onclick="stopCamera()">
+            <i class="bi bi-stop-circle me-1"></i>Stop
+          </button>
+        </div>
+      </div>
+
+      <!-- Today's Schedule -->
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header bg-dark text-white">
+          <h6 class="mb-0"><i class="bi bi-calendar3 me-2"></i>Today's Schedule</h6>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for cls in today_schedule %}
+          <div class="list-group-item px-3 py-2
+            {% if current_class and current_class.period == cls.period %}list-group-item-success fw-bold{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge bg-secondary me-1">{{ cls.period }}</span>
+                <span>{{ cls.subject }}</span>
+                {% if current_class and current_class.period == cls.period %}
+                <span class="badge bg-success ms-1">Active</span>
+                {% endif %}
+              </div>
+              <small class="text-muted">{{ cls.start_time }}–{{ cls.end_time }}</small>
+            </div>
+          </div>
+          {% else %}
+          <div class="list-group-item text-center text-muted py-3">
+            <i class="bi bi-calendar-x me-1"></i>No classes today
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Result + Log -->
+    <div class="col-lg-7">
+
+      <!-- Result Card -->
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0">
+            <i class="bi bi-info-circle me-2 text-primary"></i>Scan Result
+          </h6>
+          <span class="badge bg-primary" id="logCount">0</span>
+        </div>
+        <div class="card-body">
+
+          <!-- Idle -->
+          <div id="idleState" class="text-center py-4">
+            <i class="bi bi-qr-code display-3 text-muted mb-3 d-block"></i>
+            <h6 class="text-muted">Waiting for QR Code</h6>
+            <p class="text-muted small mb-0">
+              Click <strong>Start Camera</strong> and point it at the teacher's QR code.
+            </p>
+          </div>
+
+          <!-- Scanning -->
+          <div id="scanningState" class="text-center py-4 d-none">
+            <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;" role="status"></div>
+            <h6 class="text-muted">Scanning...</h6>
+            <p class="text-muted small mb-0">Hold the QR code steady inside the frame.</p>
+          </div>
+
+          <!-- Success -->
+          <div id="successState" class="d-none">
+            <div class="alert alert-success border-0 d-flex align-items-center gap-3 mb-3">
+              <i class="bi bi-check-circle-fill fs-2 text-success"></i>
+              <div>
+                <div class="fw-bold fs-5">Attendance Marked!</div>
+                <div class="small">Saved to database successfully.</div>
+              </div>
+            </div>
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="bg-light rounded-3 p-3">
+                  <div class="text-muted small mb-1"><i class="bi bi-person me-1"></i>Student</div>
+                  <div class="fw-bold" id="resName">—</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="bg-light rounded-3 p-3">
+                  <div class="text-muted small mb-1"><i class="bi bi-123 me-1"></i>Roll No</div>
+                  <div class="fw-bold" id="resRoll">—</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="bg-light rounded-3 p-3">
+                  <div class="text-muted small mb-1"><i class="bi bi-book me-1"></i>Subject</div>
+                  <div class="fw-bold text-primary" id="resSubject">—</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="bg-light rounded-3 p-3">
+                  <div class="text-muted small mb-1"><i class="bi bi-clock me-1"></i>Time</div>
+                  <div class="fw-bold" id="resTime">—</div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-success w-100 mt-3" onclick="resetScan(); startCamera();">
+              <i class="bi bi-arrow-repeat me-1"></i>Scan Next
+            </button>
+          </div>
+
+          <!-- Duplicate -->
+          <div id="duplicateState" class="d-none">
+            <div class="alert alert-warning border-0 d-flex align-items-center gap-3 mb-3">
+              <i class="bi bi-exclamation-triangle-fill fs-2 text-warning"></i>
+              <div>
+                <div class="fw-bold fs-5">Already Marked</div>
+                <div class="small" id="dupMsg">—</div>
+              </div>
+            </div>
+            <button class="btn btn-outline-secondary w-100" onclick="resetScan(); startCamera();">
+              <i class="bi bi-arrow-repeat me-1"></i>Scan Another
+            </button>
+          </div>
+
+          <!-- Error -->
+          <div id="errorState" class="d-none">
+            <div class="alert alert-danger border-0 d-flex align-items-center gap-3 mb-3">
+              <i class="bi bi-x-circle-fill fs-2 text-danger"></i>
+              <div>
+                <div class="fw-bold fs-5" id="errorTitle">Error</div>
+                <div class="small" id="errorMsg">—</div>
+              </div>
+            </div>
+            <button class="btn btn-outline-secondary w-100" onclick="resetScan(); startCamera();">
+              <i class="bi bi-arrow-repeat me-1"></i>Try Again
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Live Log -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <h6 class="mb-0"><i class="bi bi-check2-all me-2"></i>Session Log</h6>
+          {% if session.student_uid %}
+          <a href="{{ url_for('student.attendance') }}" class="btn btn-sm btn-outline-light">
+            My Attendance
+          </a>
+          {% endif %}
+        </div>
+        <div class="list-group list-group-flush" id="liveLog" style="max-height:280px;overflow-y:auto;">
+          <div class="list-group-item text-center text-muted py-4" id="logEmpty">
+            <i class="bi bi-inbox me-1"></i>No attendance marked yet.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Student Registration{% endblock %}
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-4"
+     style="background:linear-gradient(135deg,#0d6efd 0%,#6610f2 100%);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-6 col-md-8">
+
+        <div class="card shadow-lg border-0" style="border-radius:16px;">
+          <div class="card-header bg-primary text-white text-center py-4"
+               style="border-radius:16px 16px 0 0;">
+            <div class="mx-auto mb-2 d-flex align-items-center justify-content-center
+                        rounded-circle bg-white text-primary"
+                 style="width:56px;height:56px;">
+              <i class="bi bi-person-plus fs-3"></i>
+            </div>
+            <h4 class="fw-bold mb-0">Register New Student</h4>
+            <small class="opacity-75">KITSW QR Attendance System</small>
+          </div>
+
+          <div class="card-body p-4">
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% for cat, msg in messages %}
+                <div class="alert alert-{{ cat }} py-2 small">{{ msg }}</div>
+              {% endfor %}
+            {% endwith %}
+
+            <form method="POST">
+              <div class="row g-3">
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">
+                    Roll Number <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-123"></i></span>
+                    <input type="text" name="roll_no" class="form-control text-uppercase"
+                           placeholder="e.g. B23IT001" required />
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">
+                    Full Name <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" name="name" class="form-control"
+                           placeholder="Your full name" required />
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">
+                    Branch <span class="text-danger">*</span>
+                  </label>
+                  <select name="branch" class="form-select" required>
+                    <option value="">Select Branch</option>
+                    {% for b in branches %}
+                    <option value="{{ b }}">{{ b }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">
+                    Class <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-building"></i></span>
+                    <input type="text" name="class" class="form-control"
+                           placeholder="e.g. B.Tech IT - A" required />
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">
+                    Year <span class="text-danger">*</span>
+                  </label>
+                  <select name="year" class="form-select" required>
+                    <option value="">Select Year</option>
+                    {% for y in years %}
+                    <option value="{{ y }}">{{ y }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">
+                    Semester <span class="text-danger">*</span>
+                  </label>
+                  <select name="semester" class="form-select" required>
+                    <option value="">Select Semester</option>
+                    {% for s in semesters %}
+                    <option value="{{ s }}">Semester {{ s }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">
+                    College Email <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" name="email" class="form-control"
+                           placeholder="rollno@kitsw.ac.in" required
+                           pattern=".*@kitsw\.ac\.in$"
+                           title="Must end with @kitsw.ac.in" />
+                  </div>
+                  <div class="form-text small text-muted">
+                    Must end with <strong>@kitsw.ac.in</strong>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">Phone</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                    <input type="tel" name="phone" class="form-control"
+                           placeholder="10-digit number" />
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">
+                    Password <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="password" id="regPwd"
+                           class="form-control" placeholder="Min 6 characters"
+                           required minlength="6" />
+                    <button class="btn btn-outline-secondary" type="button"
+                            onclick="const i=document.getElementById('regPwd');i.type=i.type==='password'?'text':'password'">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mt-4">
+                <i class="bi bi-person-check me-2"></i>Register &amp; Get QR Code
+              </button>
+            </form>
+
+            <hr class="my-4">
+
+            <div class="text-center">
+              <p class="text-muted small mb-2">Already have an account?</p>
+              <a href="{{ url_for('student.login') }}"
+                 class="btn btn-outline-primary w-100 fw-semibold">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Login Here
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
