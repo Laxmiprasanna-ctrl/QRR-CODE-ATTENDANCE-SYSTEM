@@ -1,2 +1,2 @@
 # QRR
-
+QR Code Attendance System is a web-based application that automates attendance using QR code technology. Teachers generate a unique QR code for each class, and students scan it to mark their attendance. The system securely stores attendance records with date and time in a database, reducing manual work, improving accuracy, and minimizing proxy attendance. It includes features such as QR code generation, attendance tracking, and an admin dashboard for managing and viewing attendance reports. This project is built using Python (Flask), HTML, CSS, JavaScript, and SQLite/MySQL.
